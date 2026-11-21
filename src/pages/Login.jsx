@@ -75,13 +75,16 @@ export default function Login() {
           </motion.button>
         </form>
 
-        <button
-          type="button"
-          className="demo-hint"
-          onClick={() => { setEmail(DEMO_USER.email); setSenha(DEMO_USER.senha) }}
-        >
-          Acesso demo: <b>{DEMO_USER.email}</b> / <b>{DEMO_USER.senha}</b> <small>(clique para preencher)</small>
-        </button>
+        {/* No site público (Vercel) defina VITE_SHOW_DEMO=false para esconder a senha padrão */}
+        {import.meta.env.VITE_SHOW_DEMO !== 'false' && (
+          <button
+            type="button"
+            className="demo-hint"
+            onClick={() => { setEmail(DEMO_USER.email); setSenha(DEMO_USER.senha) }}
+          >
+            Acesso demo: <b>{DEMO_USER.email}</b> / <b>{DEMO_USER.senha}</b> <small>(clique para preencher)</small>
+          </button>
+        )}
       </motion.div>
     </motion.div>
   )

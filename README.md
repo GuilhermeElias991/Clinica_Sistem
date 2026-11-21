@@ -104,6 +104,10 @@ docker compose down -v         # parar e APAGAR o banco
 | `port is already allocated` | Outra coisa usa 8080, 8081 ou 5432: pare-a ou mude a porta à esquerda no `docker-compose.yml` |
 | Login falha logo após subir | A API leva ~15 s para iniciar; confira `docker compose ps` |
 
+### 🌐 Publicar na web
+
+Front no **Vercel** e API + banco no **Render**: passo a passo em **[docs/DEPLOY_WEB.md](docs/DEPLOY_WEB.md)**.
+
 Outras formas (sem Docker, banco, migrações): **[docs/COMO_RODAR.md](docs/COMO_RODAR.md)**.
 
 ---
@@ -174,6 +178,7 @@ Toda a documentação está na pasta **[docs/](docs/)**:
 | [FUNCIONALIDADES.md](docs/FUNCIONALIDADES.md) | Todas as funcionalidades do front |
 | [TESTES.md](docs/TESTES.md) | Roteiro de testes funcionais (87 casos) |
 | [ARQUITETURA.md](docs/ARQUITETURA.md) | Camadas, fluxo de dados e API planejada |
+| [DEPLOY_WEB.md](docs/DEPLOY_WEB.md) | Publicar na web: front no Vercel, API e banco no Render |
 | [BACKEND.md](docs/BACKEND.md) | API: endpoints, regras de negócio, variáveis, como rodar |
 | [BANCO_DE_DADOS.md](docs/BANCO_DE_DADOS.md) | Diagrama, tabelas e regras do banco |
 | [DOCKER.md](docs/DOCKER.md) | Imagem, compose e variáveis |

@@ -9,5 +9,6 @@ Ordem sugerida de leitura:
 5. [BACKEND.md](BACKEND.md) — API Spring Boot: endpoints, regras e variáveis
 6. [BANCO_DE_DADOS.md](BANCO_DE_DADOS.md) — schema e migrações
 7. [DOCKER.md](DOCKER.md) — containers e compose
-8. [DEPLOY_GCP.md](DEPLOY_GCP.md) — publicação no Google Cloud
-9. [DESENVOLVIMENTO.md](DESENVOLVIMENTO.md) — como o projeto foi feito e a ordem dos arquivos
+8. [DEPLOY_WEB.md](DEPLOY_WEB.md) — publicar na web (Vercel + Render)
+9. [DEPLOY_GCP.md](DEPLOY_GCP.md) — publicação no Google Cloud
+10. [DESENVOLVIMENTO.md](DESENVOLVIMENTO.md) — como o projeto foi feito e a ordem dos arquivos

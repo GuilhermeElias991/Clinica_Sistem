@@ -1,0 +1,54 @@
+# Blueprint do Render: sobe a API (Docker) + PostgreSQL.
+# Passo a passo em docs/DEPLOY_WEB.md
+#
+# Depois de criar o Blueprint, preencha no painel as variáveis marcadas com "sync: false":
+#   ADMIN_PASSWORD  -> senha do administrador (escolha uma forte)
+#   CORS_ORIGINS    -> endereço do front no Vercel, ex.: https://clinica-sistem.vercel.app
+
+databases:
+  - name: odonto-db
+    databaseName: odonto
+    user: odonto
+    plan: free
+
+services:
+  - type: web
+    name: odonto-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
+      - key: DB_HOST
+        fromDatabase:
+          name: odonto-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: odonto-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: odonto-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: odonto-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: odonto-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_EMAIL
+        value: admin@odonto.com
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SEED_DEMO
+        value: "true"
+      - key: CORS_ORIGINS
+        sync: false
