@@ -42,7 +42,69 @@ npm run dev
 
 Abra **http://localhost:5173** e entre com `admin@odonto.com` / `123456`.
 
-Outras formas (Docker, banco, migrações): **[docs/COMO_RODAR.md](docs/COMO_RODAR.md)**.
+### 🐳 Subir tudo com Docker (front + API + banco)
+
+Um único comando sobe os três serviços. Precisa do **Docker Desktop** aberto (`docker --version` deve responder).
+
+**1. Clone o repositório**
+
+```bash
+git clone https://github.com/GuilhermeElias991/Clinica_Sistem.git
+cd Clinica_Sistem
+```
+
+**2. Crie o arquivo `.env`** a partir do modelo
+
+```bash
+cp .env.example .env          # Windows (PowerShell): Copy-Item .env.example .env
+```
+
+Abra o `.env` e troque **obrigatoriamente**:
+
+| Variável | O que colocar |
+|---|---|
+| `POSTGRES_PASSWORD` | uma senha para o banco |
+| `JWT_SECRET` | texto aleatório com **no mínimo 32 caracteres** (assina o login) |
+
+O compose não sobe sem essas duas. O `.env` está no `.gitignore`: nunca envie senhas para o GitHub.
+
+**3. Suba os containers**
+
+```bash
+docker compose up -d --build
+```
+
+Na primeira vez demora alguns minutos (baixa imagens e compila o front e a API).
+
+**4. Acesse**
+
+| Serviço | Endereço |
+|---|---|
+| Sistema (front) | **http://localhost:8080** — login `admin@odonto.com` / `123456` |
+| API | http://localhost:8081/api (saúde: `/actuator/health`) |
+| Banco PostgreSQL | `localhost:5432` |
+
+As tabelas e os dados de exemplo são criados sozinhos na primeira subida.
+
+**Comandos úteis**
+
+```bash
+docker compose ps              # ver se os 3 containers estão "healthy"
+docker compose logs -f api     # acompanhar o log da API
+docker compose down            # parar tudo (mantém os dados)
+docker compose down -v         # parar e APAGAR o banco
+```
+
+**Problemas comuns**
+
+| Sintoma | Solução |
+|---|---|
+| `defina POSTGRES_PASSWORD no .env` / `defina JWT_SECRET` | Crie o `.env` (passo 2) e preencha as duas variáveis |
+| `Cannot connect to the Docker daemon` | Abra o Docker Desktop e espere "Engine running" |
+| `port is already allocated` | Outra coisa usa 8080, 8081 ou 5432: pare-a ou mude a porta à esquerda no `docker-compose.yml` |
+| Login falha logo após subir | A API leva ~15 s para iniciar; confira `docker compose ps` |
+
+Outras formas (sem Docker, banco, migrações): **[docs/COMO_RODAR.md](docs/COMO_RODAR.md)**.
 
 ---
 
