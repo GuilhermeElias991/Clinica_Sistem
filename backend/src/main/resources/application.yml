@@ -1,0 +1,56 @@
+# Configuração do back-end OdontoCare.
+# Tudo pode ser trocado por variável de ambiente (veja backend/.env.example).
+# Sem variáveis, a API sobe com um banco H2 em arquivo (./data) — não precisa instalar nada.
+
+server:
+  port: ${PORT:8080}
+  error:
+    include-message: always
+
+spring:
+  application:
+    name: odontocare-api
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:file:./data/odonto;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none          # o schema é do Flyway
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  jackson:
+    default-property-inclusion: always
+    deserialization:
+      fail-on-unknown-properties: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+app:
+  # Chave do JWT (mínimo 32 caracteres). EM PRODUÇÃO defina JWT_SECRET.
+  jwt-secret: ${JWT_SECRET:dev-only-troque-esta-chave-com-32-caracteres-ou-mais}
+  jwt-expiration-hours: ${JWT_EXPIRATION_HOURS:8}
+  # Usuário administrador criado na primeira subida (senha salva em BCrypt)
+  admin:
+    email: ${ADMIN_EMAIL:admin@odonto.com}
+    senha: ${ADMIN_PASSWORD:123456}
+    nome: ${ADMIN_NAME:Recepção}
+  # Carrega dentistas/pacientes/agendamentos de exemplo se o banco estiver vazio
+  seed-demo: ${SEED_DEMO:true}
+  # Fuso usado para "hoje" (agendamento no passado, dados de exemplo)
+  timezone: ${APP_TIMEZONE:America/Sao_Paulo}
+  cors-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:4173,http://localhost:8080}

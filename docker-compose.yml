@@ -1,0 +1,59 @@
+# Sobe o sistema completo: front (nginx) + API (Spring Boot) + PostgreSQL.
+# Uso:
+#   cp .env.example .env      (ajuste as senhas e o JWT_SECRET)
+#   docker compose up -d --build
+# Front: http://localhost:8080   |   API: http://localhost:8081/api   |   Banco: localhost:5432
+#
+# As tabelas são criadas pelo Flyway quando a API sobe (backend/src/main/resources/db/migration).
+
+services:
+  web:
+    build: .
+    container_name: odonto-web
+    ports:
+      - "8080:8080"
+    environment:
+      API_UPSTREAM: http://api:8080
+    restart: unless-stopped
+    depends_on:
+      - api
+
+  api:
+    build: ./backend
+    container_name: odonto-api
+    ports:
+      - "8081:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-odonto}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-odonto}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env (mínimo 32 caracteres)}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@odonto.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-123456}
+      SEED_DEMO: ${SEED_DEMO:-true}
+      CORS_ORIGINS: http://localhost:8080
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: odonto-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-odonto}
+      POSTGRES_USER: ${POSTGRES_USER:-odonto}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-odonto} -d ${POSTGRES_DB:-odonto}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  pgdata:
