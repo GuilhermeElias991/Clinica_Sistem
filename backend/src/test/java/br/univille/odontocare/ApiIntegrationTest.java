@@ -50,6 +50,18 @@ class ApiIntegrationTest {
         return token;
     }
 
+    private String login(String email, String senha) throws Exception {
+        MvcResult r = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"%s\",\"senha\":\"%s\"}".formatted(email, senha)))
+                .andExpect(status().isOk()).andReturn();
+        return "Bearer " + json.readTree(r.getResponse().getContentAsString()).get("token").asText();
+    }
+
+    private JsonNode getJson(String url, String bearer) throws Exception {
+        return json.readTree(mvc.perform(get(url).header("Authorization", bearer))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+    }
+
     private String auth() throws Exception {
         return "Bearer " + obterToken();
     }
@@ -184,6 +196,66 @@ class ApiIntegrationTest {
                 .andExpect(status().isNoContent());
         assertThat(getJson("/api/pacientes")).hasSize(6);
         assertThat(getJson("/api/agendamentos")).hasSize(13);
+    }
+
+    @Test
+    void cadaMedicaEnxergaSoOQueCadastrouEOAdminEnxergaTudo() throws Exception {
+        String ana = login("ana@odonto.com", "123456");
+        String carla = login("carla@odonto.com", "123456");
+        String novo = "{\"nome\":\"Paciente da Ana\",\"cpf\":\"93541134780\",\"telefone\":\"47999990000\"}";
+
+        // começa sem nada: os dados de exemplo são do administrador
+        assertThat(getJson("/api/pacientes", ana)).isEmpty();
+        assertThat(getJson("/api/dentistas", ana)).isEmpty();
+        assertThat(getJson("/api/agendamentos", ana)).isEmpty();
+        assertThat(getJson("/api/dashboard", ana).get("pacientes").asLong()).isZero();
+
+        MvcResult criado = mvc.perform(post("/api/pacientes").header("Authorization", ana)
+                        .contentType(MediaType.APPLICATION_JSON).content(novo))
+                .andExpect(status().isCreated()).andReturn();
+        long idDaAna = json.readTree(criado.getResponse().getContentAsString()).get("id").asLong();
+
+        // outra médica não vê, não abre, não edita, não apaga
+        assertThat(getJson("/api/pacientes", carla)).isEmpty();
+        mvc.perform(get("/api/pacientes/" + idDaAna).header("Authorization", carla)).andExpect(status().isNotFound());
+        mvc.perform(put("/api/pacientes/" + idDaAna).header("Authorization", carla)
+                        .contentType(MediaType.APPLICATION_JSON).content(novo)).andExpect(status().isNotFound());
+        mvc.perform(delete("/api/pacientes/" + idDaAna).header("Authorization", carla)).andExpect(status().isNotFound());
+
+        // o mesmo CPF pode existir na carteira de outra médica, sem revelar que já existe
+        mvc.perform(post("/api/pacientes").header("Authorization", carla)
+                        .contentType(MediaType.APPLICATION_JSON).content(novo)).andExpect(status().isCreated());
+        mvc.perform(post("/api/pacientes").header("Authorization", carla)
+                        .contentType(MediaType.APPLICATION_JSON).content(novo)).andExpect(status().isConflict());
+
+        // não dá para agendar usando paciente/dentista de outra pessoa
+        long dentistaDoAdmin = getJson("/api/dentistas").get(0).get("id").asLong();
+        long proc = getJson("/api/procedimentos", ana).get(0).get("id").asLong();
+        mvc.perform(post("/api/agendamentos").header("Authorization", ana).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"pacienteId\":%d,\"dentistaId\":%d,\"procedimentoId\":%d,\"data\":\"%s\",\"hora\":\"09:00\"}"
+                                .formatted(idDaAna, dentistaDoAdmin, proc, segundaFutura())))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/api/agendamentos/horarios-livres?data=" + segundaFutura() + "&dentistaId=" + dentistaDoAdmin)
+                        .header("Authorization", ana)).andExpect(status().isNotFound());
+
+        // o administrador enxerga tudo e vê de quem é cada paciente
+        JsonNode todos = getJson("/api/pacientes");
+        assertThat(todos).hasSize(8);
+        assertThat(todos.findValuesAsText("responsavel")).contains("Dra. Ana Souza", "Dra. Carla Mendes", "Recepção");
+        assertThat(getJson("/api/dashboard").get("pacientes").asLong()).isEqualTo(8);
+    }
+
+    @Test
+    void medicaNaoMexeEmProcedimentosConfiguracoesNemBackup() throws Exception {
+        String ana = login("ana@odonto.com", "123456");
+        assertThat(getJson("/api/procedimentos", ana)).hasSize(7);          // tabela de preços é compartilhada (leitura)
+        mvc.perform(post("/api/procedimentos").header("Authorization", ana).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"Teste\",\"duracao\":30,\"valor\":10}")).andExpect(status().isForbidden());
+        mvc.perform(put("/api/configuracoes").header("Authorization", ana).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"clinica\":\"X\",\"abertura\":\"07:00\",\"fechamento\":\"19:00\",\"intervalo\":15,\"sabado\":true}"))
+                .andExpect(status().isForbidden());
+        mvc.perform(get("/api/backup").header("Authorization", ana)).andExpect(status().isForbidden());
+        mvc.perform(post("/api/backup/restaurar-exemplo").header("Authorization", ana)).andExpect(status().isForbidden());
     }
 
     @Test

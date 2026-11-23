@@ -6,6 +6,7 @@ import { useToast } from '../context/ToastContext.jsx'
 import Modal, { Confirm } from '../components/Modal.jsx'
 import { Field, Empty, listItem } from '../components/UI.jsx'
 import { maskPhone, initials, todayISO } from '../utils.js'
+import { useAuth } from '../context/AuthContext.jsx'
 import { errMsg } from '../api.js'
 
 const CORES = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6', '#6366f1']
@@ -15,6 +16,7 @@ const EMPTY = { nome: '', cro: '', especialidade: 'Clínico Geral', telefone: ''
 export default function Dentistas() {
   const { dentistas, agendamentos, dentistasApi, removeDentista } = useData()
   const toast = useToast()
+  const { isAdmin } = useAuth()
   const [form, setForm] = useState(null)
   const [errors, setErrors] = useState({})
   const [del, setDel] = useState(null)
@@ -68,6 +70,7 @@ export default function Dentistas() {
                     <div>
                       <strong>{d.nome}</strong>
                       <small className="muted"><BadgeCheck size={13} /> {d.cro}</small>
+                      {isAdmin && d.responsavel && <small className="muted">Responsável: {d.responsavel}</small>}
                     </div>
                   </div>
                   <ul className="person-meta">

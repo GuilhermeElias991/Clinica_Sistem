@@ -17,12 +17,13 @@ public record PacienteDto(
         @Email(message = "E-mail inválido") @Size(max = 160, message = "E-mail muito longo") String email,
         @PastOrPresent(message = "Data futura") LocalDate nascimento,
         @Size(max = 60) String convenio,
-        String obs) {
+        String obs,
+        String responsavel) {
 
     public static PacienteDto from(Paciente p) {
         return new PacienteDto(p.getId(), p.getNome(), p.getCpf(), p.getTelefone(),
                 p.getEmail() == null ? "" : p.getEmail(),
                 p.getDataNascimento(), p.getConvenio(),
-                p.getObservacoes() == null ? "" : p.getObservacoes());
+                p.getObservacoes() == null ? "" : p.getObservacoes(), p.nomeDoDono());
     }
 }

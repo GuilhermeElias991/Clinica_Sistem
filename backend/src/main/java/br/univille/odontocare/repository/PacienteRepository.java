@@ -14,9 +14,14 @@ public interface PacienteRepository extends JpaRepository<Paciente, Long> {
 
     List<Paciente> findAllByOrderByNomeAsc();
 
-    boolean existsByCpf(String cpf);
+    List<Paciente> findAllByDonoIdOrderByNomeAsc(Long donoId);
 
-    boolean existsByCpfAndIdNot(String cpf, Long id);
+    long countByDonoId(Long donoId);
+
+    /** CPF é único por médica (dono). */
+    boolean existsByDonoIdAndCpf(Long donoId, String cpf);
+
+    boolean existsByDonoIdAndCpfAndIdNot(Long donoId, String cpf, Long id);
 
     /** Trava a linha do paciente durante o agendamento (evita duas reservas simultâneas). */
     @Lock(LockModeType.PESSIMISTIC_WRITE)

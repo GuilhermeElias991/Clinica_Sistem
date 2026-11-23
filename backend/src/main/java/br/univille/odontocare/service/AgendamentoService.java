@@ -1,6 +1,8 @@
 package br.univille.odontocare.service;
 
 import br.univille.odontocare.config.AppProperties;
+import br.univille.odontocare.config.UsuarioAtual;
+import br.univille.odontocare.config.UsuarioAtual;
 import br.univille.odontocare.domain.*;
 import br.univille.odontocare.dto.AgendamentoDto;
 import br.univille.odontocare.dto.AgendamentoRequest;
@@ -35,10 +37,13 @@ public class AgendamentoService {
     private final UsuarioRepository usuarios;
     private final ConfiguracaoService configuracao;
     private final AppProperties props;
+    private final UsuarioAtual atual;
 
     public AgendamentoService(AgendamentoRepository agendamentos, PacienteRepository pacientes,
                               DentistaRepository dentistas, ProcedimentoRepository procedimentos,
-                              UsuarioRepository usuarios, ConfiguracaoService configuracao, AppProperties props) {
+                              UsuarioRepository usuarios, ConfiguracaoService configuracao, AppProperties props,
+                              UsuarioAtual atual) {
+        this.atual = atual;
         this.agendamentos = agendamentos;
         this.pacientes = pacientes;
         this.dentistas = dentistas;
@@ -57,6 +62,8 @@ public class AgendamentoService {
     @Transactional(readOnly = true)
     public List<AgendamentoDto> listar(Filtro f) {
         Specification<Agendamento> spec = (root, q, cb) -> cb.conjunction();
+        Long dono = atual.filtroDono();
+        if (dono != null) spec = spec.and((r, q, cb) -> cb.equal(r.get("dono").get("id"), dono));
         if (f.inicio() != null) spec = spec.and((r, q, cb) -> cb.greaterThanOrEqualTo(r.get("data"), f.inicio()));
         if (f.fim() != null) spec = spec.and((r, q, cb) -> cb.lessThanOrEqualTo(r.get("data"), f.fim()));
         if (f.dentistaId() != null) spec = spec.and((r, q, cb) -> cb.equal(r.get("dentista").get("id"), f.dentistaId()));
@@ -76,6 +83,8 @@ public class AgendamentoService {
     /** Botões de horário do formulário: cada slot do expediente e se está livre. */
     @Transactional(readOnly = true)
     public List<Horario> horariosLivres(LocalDate data, Long dentistaId, Long procedimentoId, Long pacienteId, Long ignorarId) {
+        atual.permitir(dentistas.findById(dentistaId).orElse(null), "Dentista não encontrado");
+        if (pacienteId != null) atual.permitir(pacientes.findById(pacienteId).orElse(null), "Paciente não encontrado");
         Configuracao cfg = configuracao.atual();
         int passo = cfg.getIntervaloMin();
         int duracao = procedimentoId == null ? passo : procedimentos.findById(procedimentoId)
@@ -104,6 +113,7 @@ public class AgendamentoService {
                 .orElseThrow(() -> ApiException.campo("pacienteId", "Paciente não encontrado"));
         Dentista dentista = dentistas.findByIdForUpdate(req.dentistaId())
                 .orElseThrow(() -> ApiException.campo("dentistaId", "Dentista não encontrado"));
+        exigirAcesso(paciente, dentista);
         Procedimento proc = procedimentos.findById(req.procedimentoId())
                 .orElseThrow(() -> ApiException.campo("procedimentoId", "Procedimento não encontrado"));
 
@@ -125,6 +135,7 @@ public class AgendamentoService {
         a.setStatus(status);
         a.setValor(proc.getValor());
         a.setObservacoes(Documentos.vazioParaNull(req.obs()));
+        a.setDono(paciente.getDono() != null ? paciente.getDono() : atual.entidade());
         if (usuarioId != null) usuarios.findById(usuarioId).ifPresent(a::setCriadoPor);
         return AgendamentoDto.from(agendamentos.save(a));
     }
@@ -138,6 +149,7 @@ public class AgendamentoService {
                 .orElseThrow(() -> ApiException.campo("pacienteId", "Paciente não encontrado"));
         Dentista dentista = dentistas.findByIdForUpdate(req.dentistaId())
                 .orElseThrow(() -> ApiException.campo("dentistaId", "Dentista não encontrado"));
+        exigirAcesso(paciente, dentista);
         Procedimento proc = procedimentos.findById(req.procedimentoId())
                 .orElseThrow(() -> ApiException.campo("procedimentoId", "Procedimento não encontrado"));
 
@@ -188,7 +200,14 @@ public class AgendamentoService {
     // ------------------------------------------------------------------ regras
 
     private Agendamento obter(Long id) {
-        return agendamentos.findById(id).orElseThrow(() -> ApiException.notFound("Agendamento não encontrado"));
+        Agendamento a = agendamentos.findById(id).orElse(null);
+        return atual.permitir(a, "Agendamento não encontrado");
+    }
+
+    /** Paciente e dentista precisam ser da médica logada (o administrador pode usar qualquer um). */
+    private void exigirAcesso(Paciente paciente, Dentista dentista) {
+        if (!atual.podeAcessar(paciente)) throw ApiException.campo("pacienteId", "Paciente não encontrado");
+        if (!atual.podeAcessar(dentista)) throw ApiException.campo("dentistaId", "Dentista não encontrado");
     }
 
     private String statusOuPadrao(String status) {

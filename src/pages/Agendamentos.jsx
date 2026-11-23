@@ -8,11 +8,13 @@ import AppointmentModal from '../components/AppointmentModal.jsx'
 import { Confirm } from '../components/Modal.jsx'
 import { StatusBadge, Empty, listItem } from '../components/UI.jsx'
 import { fmtDate, money, STATUS, todayISO, addDays, weekStart } from '../utils.js'
+import { useAuth } from '../context/AuthContext.jsx'
 import { errMsg } from '../api.js'
 
 export default function Agendamentos() {
   const { agendamentos, dentistas, byId, agendamentosApi } = useData()
   const toast = useToast()
+  const { isAdmin } = useAuth()
   const [params] = useSearchParams()
   const [busca, setBusca] = useState('')
   const [status, setStatus] = useState(params.get('status') || 'todos')
@@ -146,7 +148,7 @@ export default function Agendamentos() {
                   {lista.map((a, i) => (
                     <motion.tr key={a.id} variants={listItem} initial="hidden" animate="show" exit="exit" custom={i} layout className={a.data === hoje ? 'row-today' : ''}>
                       <td><b>{fmtDate(a.data)}</b><br /><small className="muted">{a.hora}</small></td>
-                      <td>{a.p?.nome || <i className="muted">removido</i>}<br /><small className="muted">{a.p?.telefone}</small></td>
+                      <td>{a.p?.nome || <i className="muted">removido</i>}<br /><small className="muted">{a.p?.telefone}</small>{isAdmin && a.responsavel && <><br /><small className="muted">Resp.: {a.responsavel}</small></>}</td>
                       <td><span className="dot" style={{ background: a.d?.cor }} />{a.d?.nome}</td>
                       <td>{a.pr?.nome}<br /><small className="muted">{a.pr?.duracao} min</small></td>
                       <td>{money(a.pr?.valor)}</td>

@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "dentistas")
-public class Dentista extends Auditavel {
+public class Dentista extends Proprietario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -13,7 +13,7 @@ public class Dentista extends Auditavel {
     @Column(nullable = false, length = 150)
     private String nome;
 
-    @Column(nullable = false, length = 30, unique = true)
+    @Column(nullable = false, length = 30)
     private String cro;
 
     @Column(nullable = false, length = 80)

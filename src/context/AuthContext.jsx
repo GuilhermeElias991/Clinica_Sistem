@@ -52,7 +52,9 @@ export function AuthProvider({ children }) {
     return u
   }
 
-  return <AuthContext.Provider value={{ user, login, logout, updateUser }}>{children}</AuthContext.Provider>
+  const isAdmin = user?.cargo === 'Administrador'
+
+  return <AuthContext.Provider value={{ user, isAdmin, login, logout, updateUser }}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = () => useContext(AuthContext)

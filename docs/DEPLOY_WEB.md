@@ -21,6 +21,7 @@ Faça **primeiro o Render** (para ter a URL da API) e depois o Vercel.
 2. **New → Blueprint** → escolha o repositório `GuilhermeElias991/Clinica_Sistem`. O Render lê o `render.yaml` e cria o banco `odonto-db` e o serviço `odonto-api`.
 3. Quando pedir, preencha:
    - `ADMIN_PASSWORD` — a senha do administrador (**escolha uma forte**, não use `123456`);
+   - `MEDICAS_SENHA` — senha inicial das 4 médicas (`ana`, `carla`, `helena`, `mariana` @odonto.com); **não use `123456`** em produção;
    - `CORS_ORIGINS` — por enquanto `http://localhost:5173` (você troca no passo 3).
 4. Aguarde o deploy (a primeira vez leva uns 5–10 min). Quando ficar **Live**, copie a URL do serviço, algo como `https://odonto-api.onrender.com`.
 5. Teste: abra `https://odonto-api.onrender.com/actuator/health` — deve mostrar `{"status":"UP"}`.

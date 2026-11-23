@@ -1,6 +1,7 @@
 package br.univille.odontocare.service;
 
 import br.univille.odontocare.config.AppProperties;
+import br.univille.odontocare.config.UsuarioAtual;
 import br.univille.odontocare.domain.Agendamento;
 import br.univille.odontocare.domain.Dentista;
 import br.univille.odontocare.domain.StatusAgendamento;
@@ -26,9 +27,11 @@ public class DashboardService {
     private final PacienteRepository pacientes;
     private final DentistaRepository dentistas;
     private final AppProperties props;
+    private final UsuarioAtual atual;
 
     public DashboardService(AgendamentoRepository agendamentos, PacienteRepository pacientes,
-                            DentistaRepository dentistas, AppProperties props) {
+                            DentistaRepository dentistas, AppProperties props, UsuarioAtual atual) {
+        this.atual = atual;
         this.agendamentos = agendamentos;
         this.pacientes = pacientes;
         this.dentistas = dentistas;
@@ -48,11 +51,12 @@ public class DashboardService {
         LocalDate hoje = props.hoje();
         YearMonth ym = mes == null ? YearMonth.from(hoje) : mes;
 
-        List<Agendamento> doMes = agendamentos.findByDataBetween(ym.atDay(1), ym.atEndOfMonth());
+        Long dono = atual.filtroDono();
+        List<Agendamento> doMes = entre(dono, ym.atDay(1), ym.atEndOfMonth());
         LocalDate segunda = hoje.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-        List<Agendamento> daSemana = agendamentos.findByDataBetween(segunda, segunda.plusDays(5));
+        List<Agendamento> daSemana = entre(dono, segunda, segunda.plusDays(5));
 
-        long hojeCount = agendamentos.findByDataBetween(hoje, hoje).stream().filter(this::ativo).count();
+        long hojeCount = entre(dono, hoje, hoje).stream().filter(this::ativo).count();
 
         BigDecimal faturamento = doMes.stream()
                 .filter(a -> StatusAgendamento.CONCLUIDO.equals(a.getStatus()))
@@ -73,13 +77,18 @@ public class DashboardService {
         }).toList();
 
         List<PorDentista> porDentista = new ArrayList<>();
-        for (Dentista d : dentistas.findAllByOrderByIdAsc()) {
+        List<Dentista> meusDentistas = dono == null ? dentistas.findAllByOrderByIdAsc() : dentistas.findAllByDonoIdOrderByIdAsc(dono);
+        for (Dentista d : meusDentistas) {
             long n = doMes.stream().filter(a -> a.getDentista().getId().equals(d.getId()) && ativo(a)).count();
             porDentista.add(new PorDentista(d.getId(), d.getNome(), d.getCor(), n));
         }
 
-        return new Resumo(ym.toString(), hojeCount, pacientes.count(), faturamento,
+        return new Resumo(ym.toString(), hojeCount, dono == null ? pacientes.count() : pacientes.countByDonoId(dono), faturamento,
                 Math.round(comparecimento * 10) / 10.0, porStatus, semana, porDentista);
+    }
+
+    private List<Agendamento> entre(Long dono, LocalDate ini, LocalDate fim) {
+        return dono == null ? agendamentos.findByDataBetween(ini, fim) : agendamentos.findByDonoIdAndDataBetween(dono, ini, fim);
     }
 
     private boolean ativo(Agendamento a) {

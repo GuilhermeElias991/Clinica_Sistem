@@ -14,9 +14,12 @@ public interface DentistaRepository extends JpaRepository<Dentista, Long> {
 
     List<Dentista> findAllByOrderByIdAsc();
 
-    boolean existsByCroIgnoreCase(String cro);
+    List<Dentista> findAllByDonoIdOrderByIdAsc(Long donoId);
 
-    boolean existsByCroIgnoreCaseAndIdNot(String cro, Long id);
+    /** CRO é único por médica (dono). */
+    boolean existsByDonoIdAndCroIgnoreCase(Long donoId, String cro);
+
+    boolean existsByDonoIdAndCroIgnoreCaseAndIdNot(Long donoId, String cro, Long id);
 
     /** Trava a agenda do dentista durante o agendamento (evita duas reservas simultâneas). */
     @Lock(LockModeType.PESSIMISTIC_WRITE)

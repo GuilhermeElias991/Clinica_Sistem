@@ -1,5 +1,6 @@
 package br.univille.odontocare.web;
 
+import br.univille.odontocare.config.UsuarioAtual;
 import br.univille.odontocare.dto.ConfiguracaoDto;
 import br.univille.odontocare.service.BackupService;
 import br.univille.odontocare.service.ConfiguracaoService;
@@ -21,8 +22,11 @@ public class SistemaController {
     private final ConfiguracaoService configuracao;
     private final DashboardService dashboard;
     private final BackupService backup;
+    private final UsuarioAtual atual;
 
-    public SistemaController(ConfiguracaoService configuracao, DashboardService dashboard, BackupService backup) {
+    public SistemaController(ConfiguracaoService configuracao, DashboardService dashboard, BackupService backup,
+                             UsuarioAtual atual) {
+        this.atual = atual;
         this.configuracao = configuracao;
         this.dashboard = dashboard;
         this.backup = backup;
@@ -35,6 +39,7 @@ public class SistemaController {
 
     @PutMapping("/configuracoes")
     public ConfiguracaoDto salvarConfig(@Valid @RequestBody ConfiguracaoDto dto) {
+        atual.exigirAdmin();
         return configuracao.atualizar(dto);
     }
 
@@ -46,6 +51,7 @@ public class SistemaController {
 
     @GetMapping("/backup")
     public Map<String, Object> exportar() {
+        atual.exigirAdmin();
         return backup.exportar();
     }
 
@@ -53,13 +59,15 @@ public class SistemaController {
     @PostMapping("/backup")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void importar(@RequestBody JsonNode json) {
-        backup.importar(json);
+        atual.exigirAdmin();
+        backup.importar(json, atual.entidade());
     }
 
     /** Apaga tudo e carrega os dados de exemplo. */
     @PostMapping("/backup/restaurar-exemplo")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void restaurarExemplo() {
-        backup.restaurarExemplo();
+        atual.exigirAdmin();
+        backup.restaurarExemplo(atual.entidade());
     }
 }

@@ -1,5 +1,6 @@
 package br.univille.odontocare.service;
 
+import br.univille.odontocare.config.UsuarioAtual;
 import br.univille.odontocare.domain.Paciente;
 import br.univille.odontocare.dto.PacienteDto;
 import br.univille.odontocare.exception.ApiException;
@@ -17,15 +18,19 @@ public class PacienteService {
 
     private final PacienteRepository pacientes;
     private final AgendamentoRepository agendamentos;
+    private final UsuarioAtual atual;
 
-    public PacienteService(PacienteRepository pacientes, AgendamentoRepository agendamentos) {
+    public PacienteService(PacienteRepository pacientes, AgendamentoRepository agendamentos, UsuarioAtual atual) {
         this.pacientes = pacientes;
         this.agendamentos = agendamentos;
+        this.atual = atual;
     }
 
     @Transactional(readOnly = true)
     public List<PacienteDto> listar() {
-        return pacientes.findAllByOrderByNomeAsc().stream().map(PacienteDto::from).toList();
+        Long dono = atual.filtroDono();
+        List<Paciente> lista = dono == null ? pacientes.findAllByOrderByNomeAsc() : pacientes.findAllByDonoIdOrderByNomeAsc(dono);
+        return lista.stream().map(PacienteDto::from).toList();
     }
 
     @Transactional(readOnly = true)
@@ -36,6 +41,7 @@ public class PacienteService {
     @Transactional
     public PacienteDto criar(PacienteDto dto) {
         Paciente p = new Paciente();
+        p.setDono(atual.entidade());
         aplicar(p, dto, null);
         return PacienteDto.from(pacientes.save(p));
     }
@@ -56,13 +62,15 @@ public class PacienteService {
     }
 
     Paciente obter(Long id) {
-        return pacientes.findById(id).orElseThrow(() -> ApiException.notFound("Paciente não encontrado"));
+        Paciente p = pacientes.findById(id).orElse(null);
+        return atual.permitir(p, "Paciente não encontrado");
     }
 
     private void aplicar(Paciente p, PacienteDto dto, Long idAtual) {
         if (!cpfValido(dto.cpf())) throw ApiException.campo("cpf", "CPF inválido");
         String cpf = formatarCpf(dto.cpf());
-        boolean duplicado = idAtual == null ? pacientes.existsByCpf(cpf) : pacientes.existsByCpfAndIdNot(cpf, idAtual);
+        Long dono = p.getDono() == null ? null : p.getDono().getId();
+        boolean duplicado = idAtual == null ? pacientes.existsByDonoIdAndCpf(dono, cpf) : pacientes.existsByDonoIdAndCpfAndIdNot(dono, cpf, idAtual);
         if (duplicado) throw ApiException.conflitoCampo("cpf", "CPF já cadastrado");
         if (digitos(dto.telefone()).length() < 10) throw ApiException.campo("telefone", "Telefone inválido");
 

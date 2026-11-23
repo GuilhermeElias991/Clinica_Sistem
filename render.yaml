@@ -3,6 +3,7 @@
 #
 # Depois de criar o Blueprint, preencha no painel as variáveis marcadas com "sync: false":
 #   ADMIN_PASSWORD  -> senha do administrador (escolha uma forte)
+#   MEDICAS_SENHA   -> senha inicial das 4 médicas (ana, carla, helena, mariana @odonto.com)
 #   CORS_ORIGINS    -> endereço do front no Vercel, ex.: https://clinica-sistem.vercel.app
 
 databases:
@@ -47,6 +48,8 @@ services:
       - key: ADMIN_EMAIL
         value: admin@odonto.com
       - key: ADMIN_PASSWORD
+        sync: false
+      - key: MEDICAS_SENHA
         sync: false
       - key: SEED_DEMO
         value: "true"

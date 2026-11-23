@@ -6,6 +6,7 @@ import { useToast } from '../context/ToastContext.jsx'
 import Modal, { Confirm } from '../components/Modal.jsx'
 import { Field, Empty, listItem } from '../components/UI.jsx'
 import { money } from '../utils.js'
+import { useAuth } from '../context/AuthContext.jsx'
 import { errMsg } from '../api.js'
 
 const EMPTY = { nome: '', duracao: 30, valor: '' }
@@ -13,6 +14,7 @@ const EMPTY = { nome: '', duracao: 30, valor: '' }
 export default function Procedimentos() {
   const { procedimentos, agendamentos, procedimentosApi } = useData()
   const toast = useToast()
+  const { isAdmin } = useAuth()
   const [form, setForm] = useState(null)
   const [errors, setErrors] = useState({})
   const [del, setDel] = useState(null)
@@ -44,16 +46,18 @@ export default function Procedimentos() {
     <div className="page">
       <div className="page-head">
         <div><h2>Procedimentos</h2><p className="muted">Tabela de serviços e valores</p></div>
+        {isAdmin && (
         <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }} className="btn primary" onClick={() => { setErrors({}); setForm({ ...EMPTY }) }}>
           <Plus size={18} /> Novo procedimento
         </motion.button>
+        )}
       </div>
 
       <div className="card table-card">
         {procedimentos.length === 0 ? <Empty icon={Syringe} title="Nenhum procedimento" /> : (
           <div className="table-wrap">
             <table className="table">
-              <thead><tr><th>Procedimento</th><th>Duração</th><th>Valor</th><th>Realizados</th><th className="right">Ações</th></tr></thead>
+              <thead><tr><th>Procedimento</th><th>Duração</th><th>Valor</th><th>Realizados</th>{isAdmin && <th className="right">Ações</th>}</tr></thead>
               <tbody>
                 <AnimatePresence initial={false}>
                   {procedimentos.map((p, i) => (
@@ -62,12 +66,14 @@ export default function Procedimentos() {
                       <td><span className="tag"><Clock size={12} /> {p.duracao} min</span></td>
                       <td>{money(p.valor)}</td>
                       <td>{agendamentos.filter((a) => a.procedimentoId === p.id && a.status === 'concluido').length}</td>
+                      {isAdmin && (
                       <td className="right">
                         <div className="row-actions">
                           <button className="icon-btn sm" title="Editar" onClick={() => { setErrors({}); setForm({ ...p }) }}><Pencil size={16} /></button>
                           <button className="icon-btn sm bad" title="Excluir" onClick={() => tryDelete(p)}><Trash2 size={16} /></button>
                         </div>
                       </td>
+                      )}
                     </motion.tr>
                   ))}
                 </AnimatePresence>

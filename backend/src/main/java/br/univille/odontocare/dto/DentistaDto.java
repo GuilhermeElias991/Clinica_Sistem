@@ -12,10 +12,11 @@ public record DentistaDto(
         @NotBlank(message = "Informe a especialidade") @Size(max = 80) String especialidade,
         @Size(max = 20, message = "Telefone inválido") String telefone,
         @Pattern(regexp = "^#[0-9a-fA-F]{6}$", message = "Cor inválida (use #RRGGBB)") String cor,
-        Boolean ativo) {
+        Boolean ativo,
+        String responsavel) {
 
     public static DentistaDto from(Dentista d) {
         return new DentistaDto(d.getId(), d.getNome(), d.getCro(), d.getEspecialidade(),
-                d.getTelefone() == null ? "" : d.getTelefone(), d.getCor(), d.isAtivo());
+                d.getTelefone() == null ? "" : d.getTelefone(), d.getCor(), d.isAtivo(), d.nomeDoDono());
     }
 }

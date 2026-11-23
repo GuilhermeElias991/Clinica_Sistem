@@ -14,7 +14,8 @@ public record AppProperties(
         Admin admin,
         boolean seedDemo,
         String timezone,
-        List<String> corsOrigins) {
+        List<String> corsOrigins,
+        String medicasSenha) {
 
     public record Admin(String email, String senha, String nome) {}
 

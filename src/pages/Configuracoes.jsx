@@ -11,7 +11,7 @@ import { errMsg } from '../api.js'
 
 export default function Configuracoes() {
   const { config, setConfig, exportJSON, importJSON, resetAll } = useData()
-  const { user, updateUser } = useAuth()
+  const { user, isAdmin, updateUser } = useAuth()
   const toast = useToast()
   const [form, setForm] = useState(config)
   const [nome, setNome] = useState(user?.nome || '')
@@ -19,10 +19,12 @@ export default function Configuracoes() {
   const fileRef = useRef()
 
   const save = async () => {
-    if (!form.clinica.trim()) return toast('Informe o nome da clínica', 'error')
-    if (toMin(form.abertura) >= toMin(form.fechamento)) return toast('Abertura deve ser antes do fechamento', 'error')
+    if (isAdmin) {
+      if (!form.clinica.trim()) return toast('Informe o nome da clínica', 'error')
+      if (toMin(form.abertura) >= toMin(form.fechamento)) return toast('Abertura deve ser antes do fechamento', 'error')
+    }
     try {
-      await setConfig({ ...form, intervalo: Number(form.intervalo) })
+      if (isAdmin) await setConfig({ ...form, intervalo: Number(form.intervalo) })
       if (nome.trim() && nome.trim() !== user?.nome) await updateUser({ nome: nome.trim() })
       toast('Configurações salvas!')
     } catch (err) {
@@ -77,8 +79,10 @@ export default function Configuracoes() {
 
       <div className="grid-2">
         <motion.section className="card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="card-head"><h3>Clínica e funcionamento</h3></div>
+          <div className="card-head"><h3>{isAdmin ? 'Clínica e funcionamento' : 'Seu perfil'}</h3></div>
           <div className="form-grid">
+            {isAdmin && (
+              <>
             <Field label="Nome da clínica" full><input value={form.clinica} onChange={(e) => setForm({ ...form, clinica: e.target.value })} /></Field>
             <Field label="Abertura"><input type="time" value={form.abertura} onChange={(e) => setForm({ ...form, abertura: e.target.value })} /></Field>
             <Field label="Fechamento"><input type="time" value={form.fechamento} onChange={(e) => setForm({ ...form, fechamento: e.target.value })} /></Field>
@@ -94,6 +98,8 @@ export default function Configuracoes() {
                 <b>{form.sabado ? 'Sim' : 'Não'}</b>
               </label>
             </Field>
+              </>
+            )}
             <Field label="Seu nome (usuário)" full><input value={nome} onChange={(e) => setNome(e.target.value)} /></Field>
           </div>
           <div className="card-foot">
@@ -101,6 +107,7 @@ export default function Configuracoes() {
           </div>
         </motion.section>
 
+        {isAdmin && (
         <motion.section className="card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <div className="card-head"><h3>Dados</h3></div>
           <p className="muted">Os dados ficam salvos no servidor (banco de dados). O backup baixa uma cópia em .json que pode ser importada depois.</p>
@@ -111,10 +118,11 @@ export default function Configuracoes() {
             <button className="btn danger-ghost" onClick={() => setReset(true)}><RotateCcw size={17} /> Restaurar dados de exemplo</button>
           </div>
         </motion.section>
+        )}
       </div>
 
       <Confirm open={reset} onClose={() => setReset(false)} confirmLabel="Restaurar"
-        text="Isso apaga todos os dados atuais e restaura os dados de exemplo. Continuar?"
+        text="Isso apaga os dados de TODAS as médicas e restaura os dados de exemplo (que ficam com o administrador). Continuar?"
         onConfirm={doReset} />
     </div>
   )

@@ -1,5 +1,6 @@
 package br.univille.odontocare.service;
 
+import br.univille.odontocare.config.UsuarioAtual;
 import br.univille.odontocare.domain.Dentista;
 import br.univille.odontocare.dto.DentistaDto;
 import br.univille.odontocare.exception.ApiException;
@@ -17,15 +18,19 @@ public class DentistaService {
 
     private final DentistaRepository dentistas;
     private final AgendamentoRepository agendamentos;
+    private final UsuarioAtual atual;
 
-    public DentistaService(DentistaRepository dentistas, AgendamentoRepository agendamentos) {
+    public DentistaService(DentistaRepository dentistas, AgendamentoRepository agendamentos, UsuarioAtual atual) {
         this.dentistas = dentistas;
         this.agendamentos = agendamentos;
+        this.atual = atual;
     }
 
     @Transactional(readOnly = true)
     public List<DentistaDto> listar() {
-        return dentistas.findAllByOrderByIdAsc().stream().map(DentistaDto::from).toList();
+        Long dono = atual.filtroDono();
+        List<Dentista> lista = dono == null ? dentistas.findAllByOrderByIdAsc() : dentistas.findAllByDonoIdOrderByIdAsc(dono);
+        return lista.stream().map(DentistaDto::from).toList();
     }
 
     @Transactional(readOnly = true)
@@ -36,6 +41,7 @@ public class DentistaService {
     @Transactional
     public DentistaDto criar(DentistaDto dto) {
         Dentista d = new Dentista();
+        d.setDono(atual.entidade());
         aplicar(d, dto, null);
         return DentistaDto.from(dentistas.save(d));
     }
@@ -63,12 +69,14 @@ public class DentistaService {
     }
 
     Dentista obter(Long id) {
-        return dentistas.findById(id).orElseThrow(() -> ApiException.notFound("Dentista não encontrado"));
+        Dentista d = dentistas.findById(id).orElse(null);
+        return atual.permitir(d, "Dentista não encontrado");
     }
 
     private void aplicar(Dentista d, DentistaDto dto, Long idAtual) {
         String cro = dto.cro().trim();
-        boolean duplicado = idAtual == null ? dentistas.existsByCroIgnoreCase(cro) : dentistas.existsByCroIgnoreCaseAndIdNot(cro, idAtual);
+        Long dono = d.getDono() == null ? null : d.getDono().getId();
+        boolean duplicado = idAtual == null ? dentistas.existsByDonoIdAndCroIgnoreCase(dono, cro) : dentistas.existsByDonoIdAndCroIgnoreCaseAndIdNot(dono, cro, idAtual);
         if (duplicado) throw ApiException.conflitoCampo("cro", "CRO já cadastrado");
 
         d.setNome(dto.nome().trim());

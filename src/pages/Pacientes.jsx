@@ -8,6 +8,7 @@ import Modal, { Confirm } from '../components/Modal.jsx'
 import AppointmentModal from '../components/AppointmentModal.jsx'
 import { Field, Empty, StatusBadge, listItem } from '../components/UI.jsx'
 import { maskCPF, maskPhone, validCPF, initials, fmtDate, todayISO } from '../utils.js'
+import { useAuth } from '../context/AuthContext.jsx'
 import { errMsg } from '../api.js'
 
 const EMPTY = { nome: '', cpf: '', telefone: '', email: '', nascimento: '', convenio: 'Particular', obs: '' }
@@ -23,6 +24,7 @@ const idade = (iso) => {
 export default function Pacientes() {
   const { pacientes, agendamentos, pacientesApi, removePaciente, byId } = useData()
   const toast = useToast()
+  const { isAdmin } = useAuth()
   const [params] = useSearchParams()
   const [busca, setBusca] = useState(params.get('q') || '')
   const [form, setForm] = useState(null) // null = fechado
@@ -103,6 +105,7 @@ export default function Pacientes() {
                     <div>
                       <strong>{p.nome}</strong>
                       <small className="muted">{p.cpf} {p.nascimento && `· ${idade(p.nascimento)}`}</small>
+                      {isAdmin && p.responsavel && <small className="muted">Responsável: {p.responsavel}</small>}
                     </div>
                   </div>
                   <ul className="person-meta">

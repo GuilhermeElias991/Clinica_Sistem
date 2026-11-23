@@ -58,7 +58,7 @@ public class BackupService {
 
     /** Substitui TODOS os dados (menos usuários). Se algo estiver errado, nada é alterado. */
     @Transactional
-    public void importar(JsonNode json) {
+    public void importar(JsonNode json, Usuario dono) {
         for (String col : List.of("pacientes", "dentistas", "procedimentos", "agendamentos")) {
             if (json == null || !json.path(col).isArray()) throw ApiException.badRequest("Arquivo inválido: falta a lista \"" + col + "\"");
         }
@@ -79,6 +79,7 @@ public class BackupService {
         Map<String, Dentista> dents = new HashMap<>();
         for (JsonNode n : json.get("dentistas")) {
             Dentista d = new Dentista();
+        d.setDono(dono);
             d.setNome(obrigatorio(n, "nome", "dentista"));
             d.setCro(obrigatorio(n, "cro", "dentista"));
             if (!cros.add(d.getCro().toLowerCase())) throw ApiException.badRequest("Arquivo inválido: CRO repetido (" + d.getCro() + ")");
@@ -97,6 +98,7 @@ public class BackupService {
             if (!Documentos.cpfValido(cpf)) throw ApiException.badRequest("Arquivo inválido: CPF inválido para " + nome);
             if (!cpfs.add(Documentos.digitos(cpf))) throw ApiException.badRequest("Arquivo inválido: CPF repetido (" + nome + ")");
             Paciente p = new Paciente();
+        p.setDono(dono);
             p.setNome(nome);
             p.setCpf(Documentos.formatarCpf(cpf));
             p.setTelefone(Documentos.formatarTelefone(obrigatorio(n, "telefone", "paciente")));
@@ -117,6 +119,7 @@ public class BackupService {
                 throw ApiException.badRequest("Arquivo inválido: agendamento aponta para paciente/dentista/procedimento inexistente");
             }
             Agendamento a = new Agendamento();
+        a.setDono(dono);
             a.setPaciente(p);
             a.setDentista(d);
             a.setProcedimento(pr);
@@ -150,7 +153,7 @@ public class BackupService {
 
     /** Apaga tudo (menos usuários) e carrega os mesmos dados de exemplo do front. */
     @Transactional
-    public void restaurarExemplo() {
+    public void restaurarExemplo(Usuario dono) {
         limparTudo();
         Configuracao cfg = configuracao.atual();
         cfg.setNomeClinica("OdontoCare");
@@ -159,9 +162,9 @@ public class BackupService {
         cfg.setIntervaloMin(30);
         cfg.setAtendeSabado(false);
 
-        Dentista d1 = dentista("Dra. Ana Souza", "CRO-SC 12345", "Ortodontia", "(47) 99911-2233", "#0ea5e9");
-        Dentista d2 = dentista("Dr. Bruno Lima", "CRO-SC 23456", "Implantodontia", "(47) 99922-3344", "#8b5cf6");
-        Dentista d3 = dentista("Dra. Carla Mendes", "CRO-SC 34567", "Clínico Geral", "(47) 99933-4455", "#10b981");
+        Dentista d1 = dentista(dono, "Dra. Ana Souza", "CRO-SC 12345", "Ortodontia", "(47) 99911-2233", "#0ea5e9");
+        Dentista d2 = dentista(dono, "Dr. Bruno Lima", "CRO-SC 23456", "Implantodontia", "(47) 99922-3344", "#8b5cf6");
+        Dentista d3 = dentista(dono, "Dra. Carla Mendes", "CRO-SC 34567", "Clínico Geral", "(47) 99933-4455", "#10b981");
 
         Procedimento p1 = procedimento("Avaliação", 30, 120);
         Procedimento p2 = procedimento("Limpeza (Profilaxia)", 45, 180);
@@ -171,27 +174,27 @@ public class BackupService {
         Procedimento p6 = procedimento("Manutenção Aparelho", 30, 150);
         Procedimento p7 = procedimento("Extração", 60, 350);
 
-        Paciente c1 = paciente("Marcos Pereira", "529.982.247-25", "(47) 98811-1111", "marcos@email.com", "1990-04-12", "Particular", null);
-        Paciente c2 = paciente("Juliana Costa", "111.444.777-35", "(47) 98822-2222", "juliana@email.com", "1985-09-30", "OdontoPrev", "Alergia a penicilina");
-        Paciente c3 = paciente("Rafael Oliveira", "390.533.447-05", "(47) 98833-3333", "rafael@email.com", "2001-01-20", "Amil Dental", null);
-        Paciente c4 = paciente("Beatriz Santos", "853.513.468-93", "(47) 98844-4444", "bia@email.com", "1998-07-05", "Particular", "Usa aparelho fixo");
-        Paciente c5 = paciente("Pedro Almeida", "275.484.389-23", "(47) 98855-5555", "pedro@email.com", "1975-12-15", "Bradesco Dental", null);
-        Paciente c6 = paciente("Larissa Ferreira", "714.602.380-01", "(47) 98866-6666", "larissa@email.com", "1993-03-22", "Particular", null);
+        Paciente c1 = paciente(dono, "Marcos Pereira", "529.982.247-25", "(47) 98811-1111", "marcos@email.com", "1990-04-12", "Particular", null);
+        Paciente c2 = paciente(dono, "Juliana Costa", "111.444.777-35", "(47) 98822-2222", "juliana@email.com", "1985-09-30", "OdontoPrev", "Alergia a penicilina");
+        Paciente c3 = paciente(dono, "Rafael Oliveira", "390.533.447-05", "(47) 98833-3333", "rafael@email.com", "2001-01-20", "Amil Dental", null);
+        Paciente c4 = paciente(dono, "Beatriz Santos", "853.513.468-93", "(47) 98844-4444", "bia@email.com", "1998-07-05", "Particular", "Usa aparelho fixo");
+        Paciente c5 = paciente(dono, "Pedro Almeida", "275.484.389-23", "(47) 98855-5555", "pedro@email.com", "1975-12-15", "Bradesco Dental", null);
+        Paciente c6 = paciente(dono, "Larissa Ferreira", "714.602.380-01", "(47) 98866-6666", "larissa@email.com", "1993-03-22", "Particular", null);
 
         LocalDate segunda = props.hoje().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-        agendamento(segunda, 0, "08:00", c1, d1, p6, StatusAgendamento.CONCLUIDO);
-        agendamento(segunda, 0, "09:00", c2, d3, p2, StatusAgendamento.CONCLUIDO);
-        agendamento(segunda, 0, "14:00", c5, d2, p1, StatusAgendamento.FALTOU);
-        agendamento(segunda, 1, "10:00", c3, d3, p3, StatusAgendamento.CONCLUIDO);
-        agendamento(segunda, 1, "15:30", c4, d1, p6, StatusAgendamento.CONFIRMADO);
-        agendamento(segunda, 2, "08:30", c6, d2, p4, StatusAgendamento.CONFIRMADO);
-        agendamento(segunda, 2, "11:00", c1, d3, p2, StatusAgendamento.AGENDADO);
-        agendamento(segunda, 3, "09:00", c2, d1, p1, StatusAgendamento.AGENDADO);
-        agendamento(segunda, 3, "13:30", c5, d2, p7, StatusAgendamento.AGENDADO);
-        agendamento(segunda, 4, "10:00", c3, d3, p5, StatusAgendamento.AGENDADO);
-        agendamento(segunda, 4, "16:00", c6, d1, p6, StatusAgendamento.CANCELADO);
-        agendamento(segunda, 7, "09:00", c4, d3, p2, StatusAgendamento.AGENDADO);
-        agendamento(segunda, 8, "14:00", c1, d2, p3, StatusAgendamento.AGENDADO);
+        agendamento(dono, segunda, 0, "08:00", c1, d1, p6, StatusAgendamento.CONCLUIDO);
+        agendamento(dono, segunda, 0, "09:00", c2, d3, p2, StatusAgendamento.CONCLUIDO);
+        agendamento(dono, segunda, 0, "14:00", c5, d2, p1, StatusAgendamento.FALTOU);
+        agendamento(dono, segunda, 1, "10:00", c3, d3, p3, StatusAgendamento.CONCLUIDO);
+        agendamento(dono, segunda, 1, "15:30", c4, d1, p6, StatusAgendamento.CONFIRMADO);
+        agendamento(dono, segunda, 2, "08:30", c6, d2, p4, StatusAgendamento.CONFIRMADO);
+        agendamento(dono, segunda, 2, "11:00", c1, d3, p2, StatusAgendamento.AGENDADO);
+        agendamento(dono, segunda, 3, "09:00", c2, d1, p1, StatusAgendamento.AGENDADO);
+        agendamento(dono, segunda, 3, "13:30", c5, d2, p7, StatusAgendamento.AGENDADO);
+        agendamento(dono, segunda, 4, "10:00", c3, d3, p5, StatusAgendamento.AGENDADO);
+        agendamento(dono, segunda, 4, "16:00", c6, d1, p6, StatusAgendamento.CANCELADO);
+        agendamento(dono, segunda, 7, "09:00", c4, d3, p2, StatusAgendamento.AGENDADO);
+        agendamento(dono, segunda, 8, "14:00", c1, d2, p3, StatusAgendamento.AGENDADO);
     }
 
     /** Banco "virgem": só os procedimentos padrão da migração V1, sem dentistas/pacientes/agendamentos. */
@@ -209,8 +212,9 @@ public class BackupService {
         procedimentos.deleteAllInBatch();
     }
 
-    private Dentista dentista(String nome, String cro, String esp, String tel, String cor) {
+    private Dentista dentista(Usuario dono, String nome, String cro, String esp, String tel, String cor) {
         Dentista d = new Dentista();
+        d.setDono(dono);
         d.setNome(nome);
         d.setCro(cro);
         d.setEspecialidade(esp);
@@ -227,8 +231,9 @@ public class BackupService {
         return procedimentos.save(p);
     }
 
-    private Paciente paciente(String nome, String cpf, String tel, String email, String nasc, String conv, String obs) {
+    private Paciente paciente(Usuario dono, String nome, String cpf, String tel, String email, String nasc, String conv, String obs) {
         Paciente p = new Paciente();
+        p.setDono(dono);
         p.setNome(nome);
         p.setCpf(cpf);
         p.setTelefone(tel);
@@ -239,8 +244,9 @@ public class BackupService {
         return pacientes.save(p);
     }
 
-    private void agendamento(LocalDate segunda, int dias, String hora, Paciente c, Dentista d, Procedimento p, String status) {
+    private void agendamento(Usuario dono, LocalDate segunda, int dias, String hora, Paciente c, Dentista d, Procedimento p, String status) {
         Agendamento a = new Agendamento();
+        a.setDono(dono);
         a.setPaciente(c);
         a.setDentista(d);
         a.setProcedimento(p);

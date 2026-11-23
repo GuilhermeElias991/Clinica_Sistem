@@ -8,7 +8,7 @@ import java.time.LocalTime;
 
 @Entity
 @Table(name = "agendamentos")
-public class Agendamento extends Auditavel {
+public class Agendamento extends Proprietario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

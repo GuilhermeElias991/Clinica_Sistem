@@ -30,6 +30,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env (mínimo 32 caracteres)}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@odonto.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-123456}
+      MEDICAS_SENHA: ${MEDICAS_SENHA:-123456}
       SEED_DEMO: ${SEED_DEMO:-true}
       CORS_ORIGINS: http://localhost:8080
     depends_on:

@@ -20,12 +20,13 @@ public record AgendamentoDto(
         String status,
         BigDecimal valor,
         String obs,
-        LocalDateTime criadoEm) {
+        LocalDateTime criadoEm,
+        String responsavel) {
 
     public static AgendamentoDto from(Agendamento a) {
         return new AgendamentoDto(a.getId(), a.getPaciente().getId(), a.getDentista().getId(),
                 a.getProcedimento().getId(), a.getData(), a.getHoraInicio(), a.getHoraFim(),
                 a.getStatus(), a.getValor(), a.getObservacoes() == null ? "" : a.getObservacoes(),
-                a.getCriadoEm());
+                a.getCriadoEm(), a.nomeDoDono());
     }
 }

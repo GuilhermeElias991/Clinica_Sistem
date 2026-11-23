@@ -24,6 +24,21 @@ Sistema de agendamento para clínica odontológica: front-end em **React + Vite*
 
 Detalhes completos em **[docs/FUNCIONALIDADES.md](docs/FUNCIONALIDADES.md)**.
 
+
+## 👥 Usuários e privacidade dos dados
+
+Cada médica vê **apenas** os pacientes, dentistas e agendamentos que ela mesma cadastrou. O **administrador** vê tudo (cada registro mostra o "Responsável"). Procedimentos e horário de funcionamento são compartilhados: todas leem, só o administrador altera. Exportar/importar backup e restaurar dados de exemplo também são só do administrador.
+
+| Perfil | Login | Senha |
+|---|---|---|
+| Administrador | `admin@odonto.com` | `ADMIN_PASSWORD` (padrão local `123456`) |
+| Dra. Ana Souza | `ana@odonto.com` | `MEDICAS_SENHA` (padrão local `123456`) |
+| Dra. Carla Mendes | `carla@odonto.com` | `MEDICAS_SENHA` |
+| Dra. Helena Ribeiro | `helena@odonto.com` | `MEDICAS_SENHA` |
+| Dra. Mariana Costa | `mariana@odonto.com` | `MEDICAS_SENHA` |
+
+As contas são criadas na primeira subida (lista em `DataInitializer`). **Em produção defina `MEDICAS_SENHA`.** Os dados de exemplo pertencem ao administrador, então cada médica começa com a carteira vazia.
+
 ---
 
 ## 🚀 Rodar rápido

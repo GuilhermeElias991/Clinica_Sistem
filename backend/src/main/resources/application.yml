@@ -54,3 +54,5 @@ app:
   # Fuso usado para "hoje" (agendamento no passado, dados de exemplo)
   timezone: ${APP_TIMEZONE:America/Sao_Paulo}
   cors-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:4173,http://localhost:8080}
+  # Senha inicial das contas das médicas (ana, carla, helena, mariana @odonto.com). EM PRODUÇÃO defina MEDICAS_SENHA.
+  medicas-senha: ${MEDICAS_SENHA:123456}

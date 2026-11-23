@@ -6,7 +6,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "pacientes")
-public class Paciente extends Auditavel {
+public class Paciente extends Proprietario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -15,7 +15,7 @@ public class Paciente extends Auditavel {
     @Column(nullable = false, length = 150)
     private String nome;
 
-    @Column(nullable = false, length = 14, unique = true)
+    @Column(nullable = false, length = 14)
     private String cpf;
 
     @Column(nullable = false, length = 20)
