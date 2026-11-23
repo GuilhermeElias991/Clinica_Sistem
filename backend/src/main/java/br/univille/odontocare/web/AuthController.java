@@ -3,6 +3,7 @@ package br.univille.odontocare.web;
 import br.univille.odontocare.dto.AuthDtos.*;
 import br.univille.odontocare.service.AuthService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,13 @@ public class AuthController {
     @GetMapping("/me")
     public UsuarioDto me(@AuthenticationPrincipal Jwt jwt) {
         return auth.perfil(jwt.getSubject());
+    }
+
+    /** Troca a própria senha (exige a senha atual). */
+    @PutMapping("/me/senha")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void alterarSenha(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AlterarSenhaRequest req) {
+        auth.alterarSenha(jwt.getSubject(), req.senhaAtual(), req.novaSenha());
     }
 
     /** Tela de Configurações → "Seu nome (usuário)". */

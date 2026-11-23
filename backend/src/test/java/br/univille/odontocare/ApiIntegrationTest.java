@@ -30,6 +30,8 @@ class ApiIntegrationTest {
 
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
+    @Autowired br.univille.odontocare.repository.UsuarioRepository usuarios;
+    @Autowired org.springframework.security.crypto.password.PasswordEncoder encoder;
 
     String token;
 
@@ -256,6 +258,25 @@ class ApiIntegrationTest {
                 .andExpect(status().isForbidden());
         mvc.perform(get("/api/backup").header("Authorization", ana)).andExpect(status().isForbidden());
         mvc.perform(post("/api/backup/restaurar-exemplo").header("Authorization", ana)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void trocaDeSenha() throws Exception {
+        String ana = login("ana@odonto.com", "123456");
+        String corpo = "{\"senhaAtual\":\"%s\",\"novaSenha\":\"%s\"}";
+        mvc.perform(put("/api/auth/me/senha").header("Authorization", ana).contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo.formatted("errada", "NovaSenha123"))).andExpect(status().isBadRequest());
+        mvc.perform(put("/api/auth/me/senha").header("Authorization", ana).contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo.formatted("123456", "curta"))).andExpect(status().isBadRequest());
+        mvc.perform(put("/api/auth/me/senha").header("Authorization", ana).contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo.formatted("123456", "NovaSenha123"))).andExpect(status().isNoContent());
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"ana@odonto.com\",\"senha\":\"123456\"}")).andExpect(status().isUnauthorized());
+        login("ana@odonto.com", "NovaSenha123");
+        // volta ao original para não afetar os outros testes
+        var u = usuarios.findByEmailIgnoreCase("ana@odonto.com").orElseThrow();
+        u.setSenhaHash(encoder.encode("123456"));
+        usuarios.save(u);
     }
 
     @Test

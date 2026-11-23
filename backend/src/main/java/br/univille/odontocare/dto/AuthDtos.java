@@ -31,6 +31,10 @@ public final class AuthDtos {
 
     public record LoginResponse(String token, long expiraEmSegundos, UsuarioDto usuario) {}
 
+    public record AlterarSenhaRequest(
+            @NotBlank(message = "Informe a senha atual") String senhaAtual,
+            @NotBlank(message = "Informe a nova senha") @Size(min = 8, max = 72, message = "A nova senha precisa ter de 8 a 72 caracteres") String novaSenha) {}
+
     public record AtualizarPerfilRequest(
             @NotBlank(message = "Informe o nome") @Size(max = 120, message = "Nome muito longo") String nome) {}
 }

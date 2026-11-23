@@ -54,7 +54,10 @@ export function AuthProvider({ children }) {
 
   const isAdmin = user?.cargo === 'Administrador'
 
-  return <AuthContext.Provider value={{ user, isAdmin, login, logout, updateUser }}>{children}</AuthContext.Provider>
+  const changePassword = (senhaAtual, novaSenha) =>
+    api('/auth/me/senha', { method: 'PUT', body: { senhaAtual, novaSenha } })
+
+  return <AuthContext.Provider value={{ user, isAdmin, login, logout, updateUser, changePassword }}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = () => useContext(AuthContext)

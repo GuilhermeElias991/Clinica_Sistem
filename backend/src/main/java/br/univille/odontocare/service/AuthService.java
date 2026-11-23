@@ -72,6 +72,18 @@ public class AuthService {
         return UsuarioDto.from(u);
     }
 
+    @Transactional
+    public void alterarSenha(String email, String senhaAtual, String novaSenha) {
+        Usuario u = obter(email);
+        if (!encoder.matches(senhaAtual, u.getSenhaHash())) {
+            throw ApiException.campo("senhaAtual", "Senha atual incorreta");
+        }
+        if (senhaAtual.equals(novaSenha)) {
+            throw ApiException.campo("novaSenha", "A nova senha deve ser diferente da atual");
+        }
+        u.setSenhaHash(encoder.encode(novaSenha));
+    }
+
     @Transactional(readOnly = true)
     public Long idDoUsuario(String email) {
         return usuarios.findByEmailIgnoreCase(email).map(Usuario::getId).orElse(null);

@@ -11,12 +11,31 @@ import { errMsg } from '../api.js'
 
 export default function Configuracoes() {
   const { config, setConfig, exportJSON, importJSON, resetAll } = useData()
-  const { user, isAdmin, updateUser } = useAuth()
+  const { user, isAdmin, updateUser, changePassword } = useAuth()
   const toast = useToast()
   const [form, setForm] = useState(config)
   const [nome, setNome] = useState(user?.nome || '')
   const [reset, setReset] = useState(false)
   const fileRef = useRef()
+  const [pw, setPw] = useState({ atual: '', nova: '', conf: '' })
+  const [pwErr, setPwErr] = useState({})
+
+  const savePassword = async () => {
+    const e = {}
+    if (!pw.atual) e.senhaAtual = 'Informe a senha atual'
+    if (pw.nova.length < 8) e.novaSenha = 'Mínimo de 8 caracteres'
+    else if (pw.nova !== pw.conf) e.conf = 'As senhas não conferem'
+    setPwErr(e)
+    if (Object.keys(e).length) return
+    try {
+      await changePassword(pw.atual, pw.nova)
+      setPw({ atual: '', nova: '', conf: '' })
+      toast('Senha alterada!')
+    } catch (err) {
+      setPwErr(err.errors || {})
+      toast(errMsg(err), 'error')
+    }
+  }
 
   const save = async () => {
     if (isAdmin) {
@@ -104,6 +123,18 @@ export default function Configuracoes() {
           </div>
           <div className="card-foot">
             <motion.button whileTap={{ scale: 0.96 }} className="btn primary" onClick={save}><Save size={17} /> Salvar</motion.button>
+          </div>
+        </motion.section>
+
+        <motion.section className="card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          <div className="card-head"><h3>Alterar senha</h3></div>
+          <div className="form-grid">
+            <Field label="Senha atual" error={pwErr.senhaAtual} full><input type="password" autoComplete="current-password" value={pw.atual} onChange={(e) => setPw({ ...pw, atual: e.target.value })} /></Field>
+            <Field label="Nova senha" error={pwErr.novaSenha}><input type="password" autoComplete="new-password" value={pw.nova} onChange={(e) => setPw({ ...pw, nova: e.target.value })} /></Field>
+            <Field label="Confirmar nova senha" error={pwErr.conf}><input type="password" autoComplete="new-password" value={pw.conf} onChange={(e) => setPw({ ...pw, conf: e.target.value })} /></Field>
+          </div>
+          <div className="card-foot">
+            <motion.button whileTap={{ scale: 0.96 }} className="btn primary" onClick={savePassword}><Save size={17} /> Alterar senha</motion.button>
           </div>
         </motion.section>
 
