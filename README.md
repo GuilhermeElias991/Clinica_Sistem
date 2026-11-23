@@ -19,11 +19,22 @@ Sistema de agendamento para clínica odontológica: front-end em **React + Vite*
 | **Agendamentos** | Lista completa com filtros, busca, ordenação, status e exportação CSV |
 | **Pacientes** | Cadastro com máscara/validação de CPF, histórico de consultas |
 | **Dentistas** | Cadastro com CRO, especialidade, cor na agenda, ativar/desativar |
-| **Procedimentos** | Tabela de serviços com duração e valor |
-| **Configurações** | Horário de funcionamento, sábado, backup/restauração |
+| **Procedimentos** | Tabela de serviços com duração e valor (só o administrador edita) |
+| **Configurações** | Troca de senha e perfil (todos); horário de funcionamento, sábado e backup/restauração (só administrador) |
 
 Detalhes completos em **[docs/FUNCIONALIDADES.md](docs/FUNCIONALIDADES.md)**.
 
+
+## 🌐 Sistema no ar
+
+| | Endereço |
+|---|---|
+| **Site (front, Vercel)** | https://clinica-sistem-flame.vercel.app |
+| **API (Render)** | https://odonto-api-kly0.onrender.com — saúde em `/actuator/health` |
+
+A API roda no plano gratuito do Render: depois de um tempo parada, o primeiro acesso pode levar cerca de 1 minuto para responder.
+
+---
 
 ## 👥 Usuários e privacidade dos dados
 
@@ -37,7 +48,9 @@ Cada médica vê **apenas** os pacientes, dentistas e agendamentos que ela mesma
 | Dra. Helena Ribeiro | `helena@odonto.com` | `MEDICAS_SENHA` |
 | Dra. Mariana Costa | `mariana@odonto.com` | `MEDICAS_SENHA` |
 
-As contas são criadas na primeira subida (lista em `DataInitializer`). **Em produção defina `MEDICAS_SENHA`.** Os dados de exemplo pertencem ao administrador, então cada médica começa com a carteira vazia.
+As contas são criadas na primeira subida (lista em `DataInitializer`). **Em produção defina `MEDICAS_SENHA`** (as senhas reais ficam só no painel do Render, nunca no repositório). Os dados de exemplo pertencem ao administrador, então cada médica começa com a carteira vazia.
+
+**Troca de senha:** cada usuário altera a própria senha em *Configurações → Alterar senha* (mínimo 8 caracteres; API `PUT /api/auth/me/senha`). Recomenda-se trocar a senha inicial no primeiro acesso.
 
 ---
 
@@ -121,7 +134,7 @@ docker compose down -v         # parar e APAGAR o banco
 
 ### 🌐 Publicar na web
 
-Front no **Vercel** e API + banco no **Render**: passo a passo em **[docs/DEPLOY_WEB.md](docs/DEPLOY_WEB.md)**.
+Front no **Vercel** e API + banco no **Render** (já publicados, veja "Sistema no ar" acima): passo a passo em **[docs/DEPLOY_WEB.md](docs/DEPLOY_WEB.md)**.
 
 Outras formas (sem Docker, banco, migrações): **[docs/COMO_RODAR.md](docs/COMO_RODAR.md)**.
 
